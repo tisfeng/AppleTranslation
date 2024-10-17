@@ -18,7 +18,6 @@ public class TranslationService: NSObject {
     @MainActor
     public init(configuration: TranslationSession.Configuration? = nil) {
         self.configuration = configuration
-        self.hostingController = TranslationService.createHostingController(manager: manager)
         super.init()
         setupTranslationView()
     }
@@ -26,7 +25,6 @@ public class TranslationService: NSObject {
     /// Used for objc init.
     @MainActor
     public override init() {
-        self.hostingController = TranslationService.createHostingController(manager: manager)
         super.init()
         setupTranslationView()
     }
@@ -87,37 +85,39 @@ public class TranslationService: NSObject {
         return response.targetText
     }
 
+    public var translationView: NSView {
+        translationController.view
+    }
+
     // MARK: Internal
 
     var configuration: TranslationSession.Configuration?
-
-    /// enable translate the same language
     var enableTranslateSameLanguage = false
 
     // MARK: Private
 
     private let manager = TranslationManager()
-    private var hostingController: NSHostingController<TranslationView>
     private var window: NSWindow?
 
-    @MainActor
-    private static func createHostingController(manager: TranslationManager) -> NSHostingController<TranslationView> {
-        NSHostingController(rootView: TranslationView(manager: manager))
-    }
+    lazy var translationController = NSHostingController(rootView: TranslationView(manager: manager))
 
     @MainActor
     private func setupTranslationView() {
+        // TranslationView must be added to a window, otherwise it will not work.
         if let window = NSApplication.shared.windows.first {
-            let translationView = hostingController.view
+            let translationView = translationController.view
             window.contentView?.addSubview(translationView)
             translationView.isHidden = true
         } else {
-            window = NSWindow(contentViewController: self.hostingController)
+            window = NSWindow(contentViewController: self.translationController)
             window?.title = "Translation"
             window?.setContentSize(CGSize(width: 200, height: 200))
             window?.makeKeyAndOrderFront(nil)
+
             // Show the window as a floating window.
 //            window?.level = .floating;
         }
     }
+
+
 }

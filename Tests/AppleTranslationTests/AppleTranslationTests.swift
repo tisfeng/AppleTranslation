@@ -43,15 +43,12 @@ import Translation
         sourceLanguage: .init(languageCode: .chinese),
         targetLanguage: .init(languageCode: .english)
     )
-    print(response)
     #expect(response.targetText == "Hello")
 
-    // 需要下载 french 语言包，没有界面不好测试。
     response = try await translationService.translate(
         text: "Vite",
         sourceLanguage: .init(languageCode: .french),
         targetLanguage: .init(languageCode: .english)
     )
-    print(response)
     #expect(response.targetText == "Quickly")
 }
