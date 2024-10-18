@@ -19,13 +19,15 @@ class TranslationManager: ObservableObject {
     @Published var targetText: String = ""
     @Published var configuration: TranslationSession.Configuration?
 
+
     @MainActor
     func translate(
         text: String,
         sourceLanguage: Locale.Language?,
         targetLanguage: Locale.Language?
     ) async throws
-        -> TranslationSession.Response {
+        -> TranslationSession.Response
+    {
         sourceText = text
 
         return try await withCheckedThrowingContinuation { continuation in
@@ -55,13 +57,6 @@ class TranslationManager: ObservableObject {
             }
             translationContinuation = nil
         }
-    }
-
-    func cancelTranslation() {
-        configuration?.invalidate()
-        configuration = nil
-        translationContinuation?.resume(throwing: CancellationError())
-        translationContinuation = nil
     }
 
     // MARK: Private

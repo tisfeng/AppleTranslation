@@ -32,6 +32,7 @@ public class TranslationService: NSObject {
     // MARK: Public
 
     /// Translate text with specified source and target languages.
+    ///
     /// If no languages are provided, it uses the current configuration.
     public func translate(
         text: String,
@@ -71,6 +72,9 @@ public class TranslationService: NSObject {
     }
 
     /// Translate text with language codes, providing a more flexible api.
+    ///
+    /// - Parameters
+    ///   - sourceLanguageCode: BCP-47 code, such as zh-Hans, en, etc.
     public func translate(
         text: String,
         sourceLanguageCode: String,
@@ -85,21 +89,18 @@ public class TranslationService: NSObject {
         return response.targetText
     }
 
+    public var enableTranslateSameLanguage = false
+    public var configuration: TranslationSession.Configuration?
+
     public var translationView: NSView {
         translationController.view
     }
 
-    // MARK: Internal
-
-    var configuration: TranslationSession.Configuration?
-    var enableTranslateSameLanguage = false
-
     // MARK: Private
 
-    private let manager = TranslationManager()
     private var window: NSWindow?
-
-    lazy var translationController = NSHostingController(rootView: TranslationView(manager: manager))
+    private let manager = TranslationManager()
+    private lazy var translationController = NSHostingController(rootView: TranslationView(manager: manager))
 
     @MainActor
     private func setupTranslationView() {
@@ -115,9 +116,7 @@ public class TranslationService: NSObject {
             window?.makeKeyAndOrderFront(nil)
 
             // Show the window as a floating window.
-//            window?.level = .floating;
+            //  window?.level = .floating;
         }
     }
-
-
 }
