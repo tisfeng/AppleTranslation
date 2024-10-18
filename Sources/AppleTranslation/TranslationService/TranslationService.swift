@@ -10,26 +10,45 @@ import Foundation
 import SwiftUI
 import Translation
 
+// MARK: - TranslationService
+
 @objcMembers
 @available(macOS 15.0, *)
 public class TranslationService: NSObject {
     // MARK: Lifecycle
 
     @MainActor
-    public init(configuration: TranslationSession.Configuration? = nil) {
+    public init(
+        attachedWindow: NSWindow? = nil,
+        configuration: TranslationSession.Configuration? = nil
+    ) {
+        self.attachedWindow = attachedWindow
         self.configuration = configuration
         super.init()
         setupTranslationView()
     }
 
-    /// Used for objc init.
+    /// Initializer for objc, since objc cannot use Swift TranslationSession.Configuration.
+    ///
+    /// - Note: If attachedWindow is nil, the translation view will be attached to the translationWindow we created.
     @MainActor
-    public override init() {
-        super.init()
-        setupTranslationView()
+    public convenience init(attachedWindow: NSWindow? = nil) {
+        self.init(attachedWindow: attachedWindow, configuration: nil)
     }
 
     // MARK: Public
+
+    public var enableTranslateSameLanguage = false
+    public var configuration: TranslationSession.Configuration?
+
+    /// The window that the translation view is attached to.
+    ///
+    /// - Note: If attachedWindow is nil, the translation view will be attached to the translationWindow we created.
+    public var attachedWindow: NSWindow?
+
+    public var translationView: NSView {
+        translationController.view
+    }
 
     /// Translate text with specified source and target languages.
     ///
@@ -42,6 +61,18 @@ public class TranslationService: NSObject {
         -> TranslationSession.Response {
         let source = sourceLanguage ?? configuration?.source
         let target = targetLanguage ?? configuration?.target
+
+        do {
+            // Check if the translation is ready for use.
+            let isReady = try await translationIsReadyforUse(text: text, from: source, to: target)
+            await MainActor.run {
+                translationWindow?.alphaValue = isReady ? 0 : 1
+            }
+        } catch {
+            await MainActor.run {
+                translationWindow?.level = .floating
+            }
+        }
 
         do {
             return try await manager.translate(
@@ -74,7 +105,9 @@ public class TranslationService: NSObject {
     /// Translate text with language codes, providing a more flexible api.
     ///
     /// - Parameters
-    ///   - sourceLanguageCode: BCP-47 code, such as zh-Hans, en, etc.
+    ///   - sourceLanguageCode: ISO 639 code, such as zh, en, etc.
+    ///
+    /// - Note: Currently Apple Translate does not support language script, so zh-Hans and zh-Hant is the same as zh.
     public func translate(
         text: String,
         sourceLanguageCode: String,
@@ -89,34 +122,48 @@ public class TranslationService: NSObject {
         return response.targetText
     }
 
-    public var enableTranslateSameLanguage = false
-    public var configuration: TranslationSession.Configuration?
-
-    public var translationView: NSView {
-        translationController.view
-    }
-
     // MARK: Private
 
-    private var window: NSWindow?
     private let manager = TranslationManager()
-    private lazy var translationController = NSHostingController(rootView: TranslationView(manager: manager))
+    private var translationWindow: NSWindow?
+
+    private lazy var translationController = NSHostingController(
+        rootView: TranslationView(manager: manager)
+    )
+
+    /// Check if the translation is ready for use.
+    private func translationIsReadyforUse(
+        text: String, from source: Locale.Language?, to target: Locale.Language?
+    ) async throws
+        -> Bool {
+        let status = try await LanguageAvailability().status(for: text, from: source, to: target)
+        return status == .installed
+    }
 
     @MainActor
     private func setupTranslationView() {
         // TranslationView must be added to a window, otherwise it will not work.
-        if let window = NSApplication.shared.windows.first {
+        if let attachedWindow {
             let translationView = translationController.view
-            window.contentView?.addSubview(translationView)
+            attachedWindow.contentView?.addSubview(translationView)
             translationView.isHidden = true
         } else {
-            window = NSWindow(contentViewController: self.translationController)
-            window?.title = "Translation"
-            window?.setContentSize(CGSize(width: 200, height: 200))
-            window?.makeKeyAndOrderFront(nil)
-
-            // Show the window as a floating window.
-            //  window?.level = .floating;
+            translationWindow = NSWindow(contentViewController: translationController)
+            translationWindow?.title = "Translation"
+            translationWindow?.setContentSize(CGSize(width: 200, height: 200))
+            translationWindow?.makeKeyAndOrderFront(nil)
         }
+    }
+}
+
+@available(macOS 15.0, *)
+extension LanguageAvailability {
+    public func status(for text: String, from source: Locale.Language?, to target: Locale.Language?)
+        async throws
+        -> LanguageAvailability.Status {
+        if let source {
+            return await status(from: source, to: target)
+        }
+        return try await status(for: text, to: target)
     }
 }

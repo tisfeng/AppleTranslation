@@ -41,15 +41,56 @@ import Translation
     #expect(response.targetText == "good")
 }
 
+@MainActor
+@available(macOS 15.0, *)
+@Test func translateChinese() async throws {
+    // English -> English
+    let translationService = TranslationService()
+    var response = try await translationService.translate(
+        text: "開門",
+        sourceLanguage: .init(identifier: "zh"),
+        targetLanguage: .init(identifier: "en")
+    )
+    #expect(response.targetText == "Open the door")
+
+    response = try await translationService.translate(
+        text: "開門",
+        sourceLanguage: .init(identifier: "zh-Hans"),
+        targetLanguage: .init(identifier: "en")
+    )
+    #expect(response.targetText == "Open the door")
+
+    response = try await translationService.translate(
+        text: "開門",
+        sourceLanguage: .init(identifier: "zh-Hant"),
+        targetLanguage: .init(identifier: "en")
+    )
+    #expect(response.targetText == "Open the door")
+
+    do {
+        response = try await translationService.translate(
+            text: "開門",
+            sourceLanguage: .init(identifier: "zh-Hant"),
+            targetLanguage: .init(identifier: "zh-Hans")
+        )
+    } catch {
+        let err = error as! TranslationError
+        if case err = TranslationError.unsupportedLanguagePairing {
+            #expect(true)
+        } else {
+            #expect(Bool(false))
+        }
+    }
+}
+
 /// Need to download the french language pack, hard to test without UI.
 @MainActor
 @available(macOS 15.0, *)
-@Test func showDownloadLangaugePackUI() async throws {
+@Test func showDownloadLangaugeUI() async throws {
     let translationService = TranslationService()
-    let response = try await translationService.translate(
+    _ = try? await translationService.translate(
         text: "Vite",
         sourceLanguage: .init(languageCode: .french),
         targetLanguage: .init(languageCode: .english)
     )
-    #expect(response.targetText == "Quickly")
 }
