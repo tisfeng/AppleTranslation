@@ -3,20 +3,15 @@ import PackageDescription
 
 let package = Package(
     name: "AppleTranslation",
-    platforms: [
-        .macOS(.v14)
-    ],
     products: [
         .library(
             name: "AppleTranslation",
             targets: ["AppleTranslation"]
         )
     ],
-    dependencies: [],
     targets: [
         .target(
-            name: "AppleTranslation",
-            dependencies: []
+            name: "AppleTranslation"
         ),
         .testTarget(
             name: "AppleTranslationTests",
