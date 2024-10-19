@@ -2,6 +2,8 @@
 
 AppleTranslation is a wrapper for the [Apple Translation API](https://developer.apple.com/documentation/Translation/translating-text-within-your-app).
 
+It's a part of [Easydict](https://github.com/tisfeng/Easydict).
+
 ## Usage
 
 ```swift
