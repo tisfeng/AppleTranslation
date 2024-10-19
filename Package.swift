@@ -7,7 +7,7 @@ let package = Package(
         .library(
             name: "AppleTranslation",
             targets: ["AppleTranslation"]
-        ),
+        )
     ],
     dependencies: [],
     targets: [
@@ -18,6 +18,10 @@ let package = Package(
         .testTarget(
             name: "AppleTranslationTests",
             dependencies: ["AppleTranslation"]
-        )
+        ),
+        .executableTarget(
+            name: "AppleTranslationExample",
+            dependencies: ["AppleTranslation"]
+        ),
     ]
 )
