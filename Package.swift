@@ -3,6 +3,9 @@ import PackageDescription
 
 let package = Package(
     name: "AppleTranslation",
+    platforms: [
+        .macOS(.v14)
+    ],
     products: [
         .library(
             name: "AppleTranslation",
