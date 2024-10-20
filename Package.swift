@@ -17,9 +17,5 @@ let package = Package(
             name: "AppleTranslationTests",
             dependencies: ["AppleTranslation"]
         ),
-        .executableTarget(
-            name: "AppleTranslationExample",
-            dependencies: ["AppleTranslation"]
-        ),
     ]
 )

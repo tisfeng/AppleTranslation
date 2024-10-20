@@ -29,6 +29,16 @@ import Translation
 
 @MainActor
 @available(macOS 15.0, *)
+@Test func autoDetectSourceLanguage() async throws {
+    // Auto detect source language, and target language is based on the system language.
+    let translationService = TranslationService()
+    let response = try await translationService.translate(text: "good")
+    print(response.targetText)
+    #expect(response.targetText == "利益")
+}
+
+@MainActor
+@available(macOS 15.0, *)
 @Test func translateSameLanguage() async throws {
     // English -> English
     let translationService = TranslationService()
