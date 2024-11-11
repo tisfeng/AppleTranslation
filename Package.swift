@@ -17,5 +17,9 @@ let package = Package(
             name: "AppleTranslationTests",
             dependencies: ["AppleTranslation"]
         ),
+        .target(
+            name: "AppleTranslationExample",
+            dependencies: ["AppleTranslation"],
+            path: "AppleTranslationExample"),
     ]
 )
